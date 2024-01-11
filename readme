@@ -1,0 +1,30 @@
+Make a trading bot that should enter a position of X amount specified in USD on
+Binance Spot and Binance USD-M Futures. The bot should place a limit buy
+order on the spot market and a market sell order on the futures for the
+executed amount. The limit order price should be equal to the best bid on the
+spot, and the limit order size should be equal to the best bid on the futures.
+
+For example,
+Order1: LIMIT BUY 1 BTCUSDT
+Order1: PARTIALLY FILLED 0.2 BTC
+Order2: MARKET SELL 0.2 BTCUSDT_PERP
+Order1: FILLED 0.8 BTC
+Order3: MARKET SELL 0.8 BTCUSDT_PERP
+Order4: LIMIT BUY 1 BTCUSDT
+... and so on
+
+Predefined parameters:
+Spot symbol: BTCUSDT
+Perp futures symbol: BTCUSDT
+Max order size: $100
+Min order size: $25
+
+Input:
+X amount
+
+Output:
+execution reports (simple stdout is ok)
+amount executed and spread on completion (difference between buy
+and sell prices in bps)
+
+You are free to use any 3rd-party library.

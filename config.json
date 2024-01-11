@@ -1,0 +1,8 @@
+{
+  "spot_url": "https://testnet.binance.vision",
+  "usd_futures_url": "https://testnet.binancefuture.com",
+  "symbol": "BTCUSDT",
+  "min_order_size": 25,
+  "max_order_size": 100,
+  "total_input_amount": 150
+}
