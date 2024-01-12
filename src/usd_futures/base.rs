@@ -6,8 +6,8 @@ use {
     std::sync::Arc,
     hyper::client::connect::Connect,
     crate::config::Config,
+    super::FuturesTicker,
 };
-use crate::usd_futures::FuturesTiker;
 
 
 pub struct Futures<T>
@@ -29,16 +29,17 @@ impl<T> Futures<T>
         }
     }
 
-    pub async fn tiker (&self) -> Result<FuturesTiker, Error> {
+    pub async fn ticker (&self) -> Result<FuturesTicker, Error> {
         let request = RequestBuilder::new(Method::Get, "/fapi/v1/ticker/bookTicker")
             .params(vec![
                 ("symbol", self.config.symbol.as_str())
             ]);
         let response = self.client.send(request).await?.into_body_str().await;
-        let tiker = serde_json::from_str(&response?)
+        let ticker = serde_json::from_str(&response?)
             .expect("Couldn't parse response GET /fapi/v1/ticker/bookTicker");
 
-        Ok(tiker)
+        Ok(ticker)
     }
+
 
 }

@@ -1,19 +1,22 @@
 use serde::{
-    Deserialize,
+    de, Deserialize, Deserializer,
 };
 
 pub mod base;
-
 pub use base::Spot;
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct SpotTiker {
-    symbol: String,
-    bid_price: String,
-    bid_qty: String,
-    ask_price: String,
-    ask_qty: String,
+pub struct SpotTicker {
+    pub symbol: String,
+    #[serde(deserialize_with = "f32_deserialize")]
+    pub bid_price: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    pub bid_qty: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    pub ask_price: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    pub ask_qty: f32,
 }
 
 #[derive(Deserialize, Debug)]
@@ -35,7 +38,6 @@ pub enum Side {
     Buy,
     Sell,
 }
-
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "UPPERCASE")]
@@ -60,25 +62,33 @@ pub enum OrderType {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct Fill {
-    price: String,
-    qty: String,
-    comission: String,
-    comission_asset: String,
+    #[serde(deserialize_with = "f32_deserialize")]
+    price: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    qty: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    comission: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    comission_asset: f32,
     trade_id: u64,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct NewOrder {
+struct LimitOrder {
     symbol: String,
     order_id: u32,
     order_list_id: i32,
     client_order_id: String,
     transact_time: u64,
-    price: String,
-    orig_qty: String,
-    executed_qty: String,
-    cummulative_quote_qty: String,
+    #[serde(deserialize_with = "f32_deserialize")]
+    price: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    orig_qty: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    executed_qty: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    cummulative_quote_qty: f32,
     status: OrderStatus,
     time_in_force: TimeInForce,
     r#type: OrderType,
@@ -88,7 +98,6 @@ struct NewOrder {
     self_trade_prevention_mode: String,
 }
 
-
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct QueryOrder {
@@ -96,20 +105,34 @@ struct QueryOrder {
     order_id: u32,
     order_list_id: i32,
     client_order_id: String,
-    price: String,
-    orig_qty: String,
-    executed_qty: String,
-    cummulative_quote_qty: String,
+    #[serde(deserialize_with = "f32_deserialize")]
+    price: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    orig_qty: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    executed_qty: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    cummulative_quote_qty: f32,
     status: OrderStatus,
     time_in_force: TimeInForce,
     r#type: OrderType,
     side: Side,
-    stop_price: String,
-    iceberg_qty: String,
+    #[serde(deserialize_with = "f32_deserialize")]
+    stop_price: f32,
+    #[serde(deserialize_with = "f32_deserialize")]
+    iceberg_qty: f32,
     time: u64,
     update_time: u64,
     is_working: bool,
     working_time: u64,
-    orig_quote_order_qty: String,
+    #[serde(deserialize_with = "f32_deserialize")]
+    orig_quote_order_qty: f32,
     self_trade_prevention_mode: String,
+}
+
+pub fn f32_deserialize<'de, D>(deserializer: D) -> Result<f32, D::Error>
+    where D: Deserializer<'de>
+{
+    let s = String::deserialize(deserializer)?;
+    s.parse().map_err(de::Error::custom)
 }
