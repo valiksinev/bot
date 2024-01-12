@@ -2,7 +2,6 @@ mod spot;
 mod usd_futures;
 mod config;
 
-
 use {
     binance_spot_connector_rust::{
         http::{request::{Request, RequestBuilder}, Credentials, Method},
@@ -18,50 +17,45 @@ use {
     config::Config,
     spot::{Spot, SpotTiker, },
     usd_futures::{Futures, FuturesTiker,},
-    std::sync::Arc,
+    std::{
+        env, sync::Arc,
+    },
 };
-
-
-
-
 
 #[tokio::main]
 async fn main() -> Result<(), Error>{
 
-    let config = Config::read("/home/user/CLionProjects/edge/bot/config.json").unwrap();
+    let args: Vec<String> = env::args().collect();
 
-    let spot = Spot::new(Arc::new(BinanceHttpClient::with_url(&config.spot_url)));
-    let futures = Spot::new(Arc::new(BinanceHttpClient::with_url(&config.usd_futures_url)));
-
-
-    let f1 = async {
-        let request = market::book_ticker().symbol("BTCUSDT");
-        spot.client.send(request).await?.into_body_str().await
+    let path = if args.len() == 2 {
+        &args[1]
+    } else {
+        "/home/user/CLionProjects/edge/bot/config.json"
     };
 
-    let f2 = async {
-        let request = RequestBuilder::new(Method::Get, "/fapi/v1/ticker/bookTicker")
-            .params(vec![
-                ("symbol", "BTCUSDT")
-            ]);
+    let config = Config::read(path)
+        .unwrap_or_else(|why| panic!("Couldn't open config {}: {}", path, why));
+    let config = Arc::new(config);
 
-        futures.client.send(request).await?.into_body_str().await
-    };
+    let spot = Spot::new(
+        Arc::new(BinanceHttpClient::with_url(&config.spot_url)),
+        Arc::clone(&config),
+    );
+
+    let futures = Futures::new(
+        Arc::new(BinanceHttpClient::with_url(&config.usd_futures_url)),
+        Arc::clone(&config),
+    );
 
 
-    let (spot, futures) = futures::join!(f1, f2);
-    let spot: SpotTiker = serde_json::from_str(&spot?).unwrap();
-    let futures: FuturesTiker = serde_json::from_str(&futures?).unwrap();
+    let (spot, futures) = futures::join!(spot.tiker(), futures.tiker());
 
-    println!("{:?}", spot);
-    println!("{:?}\n", futures);
-    //
-    //
-    // let credentials = Credentials::from_hmac(
-    //     "AgMzxt1KB7QtrnwB8QdriqKCVHsZyyVZSXeun29htPB68yfSKnOj07NWXC0OgQwl".to_owned(),
-    //     "W7fhQZtB3xL4sml3WpLxILdBSqIPCuZwP71bg8WFm5AIsHJ1hNKtwuvXFfbV0m6h".to_owned()
-    // );
-    //
+    println!("{:?}", spot?);
+    println!("{:?}\n", futures?);
+
+    let credentials = Credentials::from_hmac(&config.api_key, &config.api_secret);
+
+
     // let price = spot.bid_price.parse::<f32>().expect(&format!("spot.bid_price parse error: {}", spot.bid_price));
     // let min : f32 = 25.0 / price;
     // let max : f32 = 100.0 / price;

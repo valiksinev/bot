@@ -4,5 +4,7 @@
   "symbol": "BTCUSDT",
   "min_order_size": 25,
   "max_order_size": 100,
-  "total_input_amount": 150
+  "total_input_amount": 150,
+  "api_key": "AgMzxt1KB7QtrnwB8QdriqKCVHsZyyVZSXeun29htPB68yfSKnOj07NWXC0OgQwl",
+  "api_secret": "W7fhQZtB3xL4sml3WpLxILdBSqIPCuZwP71bg8WFm5AIsHJ1hNKtwuvXFfbV0m6h"
 }

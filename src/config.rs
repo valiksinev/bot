@@ -1,8 +1,7 @@
-use std::io;
 use {
     serde::Deserialize,
     std::{
-        fs::File, io::Read,
+        fs::File, io, io::Read,
     },
 };
 
@@ -14,16 +13,15 @@ pub struct Config {
     pub min_order_size: u32,
     pub max_order_size: u32,
     pub total_input_amount: u32,
+    pub api_key: String,
+    pub api_secret: String,
 }
 
-
 impl Config {
-    pub fn read(path: &str) -> std::io::Result<Config> {
+    pub fn read(path: &str) -> io::Result<Config> {
         let mut f = File::open(path)?;
-            // .with_context(|| format!("Failed to read config.json from {}", path))?;
         let mut s = String::new();
         f.read_to_string(&mut s)?;
-
 
         Ok(serde_json::from_str(&s)?)
     }
