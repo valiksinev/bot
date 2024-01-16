@@ -58,9 +58,14 @@ async fn main() -> Result<(), Error>{
 
     let local_spawner = LocalSpawner::new(Arc::new(futures));
 
-    spot.limit_order(&spot_ticker, &futures_ticker, &local_spawner).await?;
-    local_spawner.join();
+    let total = config.total_input_amount as f32;
+    let  mut spent = 0.0;
+    while spent < total {
+        spent += spot.limit_order(&spot_ticker, &futures_ticker, &local_spawner).await?;
+        println!("spent: {}, remained : {}", spent, total - spent);
+    }
 
+    local_spawner.join();
     Ok(())
 }
 

@@ -48,7 +48,7 @@ where
         spot_ticker: &SpotTicker,
         futures_ticker: &FuturesTicker,
         spawner: &LocalSpawner,
-    ) -> Result<(), Error> {
+    ) -> Result<(f32), Error> {
 
         let min : f32 = self.config.min_order_size as f32 / spot_ticker.bid_price;
         let max : f32 = self.config.max_order_size as f32 / spot_ticker.bid_price;
@@ -98,11 +98,11 @@ where
 
             spawner.spawn(Task::market_order(qty));
             executed_qty = query_order.executed_qty;
-            println!("limit order executed: {}", executed_qty);
         }
-        println!("finished");
 
-        Ok(())
+        // TODO: use account balance
+        let spent_usdt = price * qty;
+        Ok(( spent_usdt))
     }
 
 
@@ -125,22 +125,5 @@ where
         println!("{:?}\n", query_order);
 
         Ok(query_order)
-    }
-
-    pub async fn all_orders(&self) -> Result<(), Error> {
-        let request = RequestBuilder::new(Method::Get, "/api/v3/allOrders")
-            .params(vec![
-                ("symbol", self.config.symbol.as_str()),
-            ])
-            .sign();
-
-        let query = self.client.send(request)
-            .await?
-            .into_body_str()
-            .await?;
-
-        println!("{:?}\n", query);
-
-        Ok(())
     }
 }
