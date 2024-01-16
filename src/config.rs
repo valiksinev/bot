@@ -10,11 +10,13 @@ pub struct Config {
     pub spot_url: String,
     pub usd_futures_url: String,
     pub symbol: String,
-    pub min_order_size: u32,
-    pub max_order_size: u32,
-    pub total_input_amount: u32,
-    pub api_key: String,
-    pub api_secret: String,
+    pub min_order_size: u64,
+    pub max_order_size: u64,
+    pub total_input_amount: u64,
+    pub spot_api_key: String,
+    pub spot_api_secret: String,
+    pub futures_api_key: String,
+    pub futures_api_secret: String,
 }
 
 impl Config {

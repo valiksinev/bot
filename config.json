@@ -5,6 +5,8 @@
   "min_order_size": 25,
   "max_order_size": 100,
   "total_input_amount": 150,
-  "api_key": "AgMzxt1KB7QtrnwB8QdriqKCVHsZyyVZSXeun29htPB68yfSKnOj07NWXC0OgQwl",
-  "api_secret": "W7fhQZtB3xL4sml3WpLxILdBSqIPCuZwP71bg8WFm5AIsHJ1hNKtwuvXFfbV0m6h"
+  "spot_api_key": "AgMzxt1KB7QtrnwB8QdriqKCVHsZyyVZSXeun29htPB68yfSKnOj07NWXC0OgQwl",
+  "spot_api_secret": "W7fhQZtB3xL4sml3WpLxILdBSqIPCuZwP71bg8WFm5AIsHJ1hNKtwuvXFfbV0m6h",
+  "futures_api_key": "698692c37487b659c06365cd5c06ffb85bfd35fc3cebfdc784b2d19197bd1b11",
+  "futures_api_secret": "4b0a113f1b1dd83148de81dae6df884770d175492299c8b1466a41bb99073794"
 }

@@ -21,7 +21,7 @@ pub struct SpotTicker {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-enum OrderStatus {
+pub enum OrderStatus {
     New,
     PartiallyFilled,
     Filled,
@@ -67,9 +67,8 @@ struct Fill {
     #[serde(deserialize_with = "f32_deserialize")]
     qty: f32,
     #[serde(deserialize_with = "f32_deserialize")]
-    comission: f32,
-    #[serde(deserialize_with = "f32_deserialize")]
-    comission_asset: f32,
+    commission: f32,
+    commission_asset: String,
     trade_id: u64,
 }
 
@@ -77,8 +76,8 @@ struct Fill {
 #[serde(rename_all = "camelCase")]
 struct LimitOrder {
     symbol: String,
-    order_id: u32,
-    order_list_id: i32,
+    order_id: u64,
+    order_list_id: i64,
     client_order_id: String,
     transact_time: u64,
     #[serde(deserialize_with = "f32_deserialize")]
@@ -102,8 +101,8 @@ struct LimitOrder {
 #[serde(rename_all = "camelCase")]
 struct QueryOrder {
     symbol: String,
-    order_id: u32,
-    order_list_id: i32,
+    order_id: u64,
+    order_list_id: i64,
     client_order_id: String,
     #[serde(deserialize_with = "f32_deserialize")]
     price: f32,

@@ -1,14 +1,17 @@
-
 use {
     binance_spot_connector_rust::{
         hyper::{BinanceHttpClient, Error}, market,
-        http::{Method, request::RequestBuilder},
+        http::{Method, request::RequestBuilder, Credentials},
     },
-    crate::config::Config,
-    crate::usd_futures::FuturesTicker,
-    hyper::client::connect::Connect,
+    crate::{
+        config::Config, usd_futures::{FuturesTicker, LocalSpawner, Task},
+    },
+    hyper::{
+        client::connect::Connect,
+    },
     std::sync::Arc,
     super::{SpotTicker, LimitOrder, QueryOrder},
+
 };
 
 
@@ -33,14 +36,19 @@ where
 
     pub async fn ticker (&self) -> Result<SpotTicker, Error> {
         let request = market::book_ticker().symbol(&self.config.symbol);
-        let response = self.client.send(request).await?.into_body_str().await;
-        let ticker = serde_json::from_str(&response?)
-            .expect("Couldn't parse response GET /api/v3/ticker/bookTicker");
+        let response = self.client.send(request).await?.into_body_str().await?;
+        let ticker = serde_json::from_str(&response)
+            .expect(&format!("Couldn't parse response GET /api/v3/ticker/bookTicker: {}", &response));
 
         Ok(ticker)
     }
 
-    pub async fn limit_order(&self, spot_ticker: &SpotTicker, futures_ticker: &FuturesTicker) -> Result<(), Error> {
+    pub async fn limit_order(
+        &self,
+        spot_ticker: &SpotTicker,
+        futures_ticker: &FuturesTicker,
+        spawner: &LocalSpawner,
+    ) -> Result<(), Error> {
 
         let min : f32 = self.config.min_order_size as f32 / spot_ticker.bid_price;
         let max : f32 = self.config.max_order_size as f32 / spot_ticker.bid_price;
@@ -52,10 +60,10 @@ where
         };
 
         // TODO: remove this workaround
-        let price: f32 = 30000.0;
+        let price: f32 = 43600.0;
         let qty: f32 = 0.001;
 
-
+        println!("create spot limit order");
         let request = RequestBuilder::new(Method::Post, "/api/v3/order")
             .params(vec![
                 ("symbol", self.config.symbol.as_str()),
@@ -67,41 +75,38 @@ where
             ])
             .sign();
 
-        let response = self.client.send(request)
-            .await?
-            .into_body_str()
-            .await?;
+        let response = match self.client.send(request).await {
+            Ok(mes) => {
+                mes.into_body_str().await.unwrap()
+            },
+            Err(why) => {
+                println!("Couldn't send Spot limit order: {:?}", why);
+                return Err(why);
+            }
+        };
 
         let order : LimitOrder = serde_json::from_str(&response)
             .expect(&format!("Couldn't deserialize response Post /api/v3/order: {}", response));
 
         println!("{:?}\n", order);
 
-        self.query_order(order.order_id).await?;
-        self.delete_open_orders().await?;
+        let mut executed_qty = 0_f32;
+
+        while executed_qty < order.orig_qty {
+            let query_order = self.query_order(order.order_id).await?;
+            let qty = query_order.executed_qty - executed_qty;
+
+            spawner.spawn(Task::market_order(qty));
+            executed_qty = query_order.executed_qty;
+            println!("limit order executed: {}", executed_qty);
+        }
+        println!("finished");
 
         Ok(())
     }
 
-    /// debug only
-    async fn delete_open_orders(&self) -> Result<(), Error> {
-        let request = RequestBuilder::new(Method::Delete, "/api/v3/openOrders")
-            .params(vec![
-                ("symbol", self.config.symbol.as_str()),
-            ])
-            .sign();
 
-        let delete = self.client.send(request)
-            .await?
-            .into_body_str()
-            .await?;
-
-        println!("deleted orders: {:?}\n", delete);
-
-        Ok(())
-    }
-
-    async fn query_order(&self, order_id: u32) -> Result<(), Error> {
+    async fn query_order(&self, order_id: u64) -> Result<(QueryOrder), Error> {
         let request = RequestBuilder::new(Method::Get, "/api/v3/order")
             .params(vec![
                 ("symbol", self.config.symbol.as_str()),
@@ -118,6 +123,23 @@ where
             .expect(&format!("Couldn't deserialize response Get /api/v3/order: {}", query));
 
         println!("{:?}\n", query_order);
+
+        Ok(query_order)
+    }
+
+    pub async fn all_orders(&self) -> Result<(), Error> {
+        let request = RequestBuilder::new(Method::Get, "/api/v3/allOrders")
+            .params(vec![
+                ("symbol", self.config.symbol.as_str()),
+            ])
+            .sign();
+
+        let query = self.client.send(request)
+            .await?
+            .into_body_str()
+            .await?;
+
+        println!("{:?}\n", query);
 
         Ok(())
     }

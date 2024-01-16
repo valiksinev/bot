@@ -165,6 +165,7 @@ dependencies = [
  "binance_spot_connector_rust",
  "futures",
  "hyper",
+ "hyper-tls",
  "rust_decimal",
  "rust_decimal_macros",
  "serde",

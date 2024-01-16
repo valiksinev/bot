@@ -10,7 +10,7 @@ use {
     core::str::FromStr,
     config::Config,
     spot::{Spot,  },
-    usd_futures::{Futures,},
+    usd_futures::{Futures, LocalSpawner},
     std::{
         env, sync::Arc,
     },
@@ -31,12 +31,13 @@ async fn main() -> Result<(), Error>{
         .unwrap_or_else(|why| panic!("Couldn't open config {}: {}", path, why));
     let config = Arc::new(config);
 
-    let credentials = Credentials::from_hmac(&config.api_key, &config.api_secret);
+    let spot_credentials = Credentials::from_hmac(&config.spot_api_key, &config.spot_api_secret);
+    let futures_credentials = Credentials::from_hmac(&config.futures_api_key, &config.futures_api_secret);
 
     let spot = Spot::new(
         Arc::new(
             BinanceHttpClient::with_url(&config.spot_url).
-                credentials(credentials.clone())
+                credentials(spot_credentials.clone())
         ),
         Arc::clone(&config),
     );
@@ -44,7 +45,7 @@ async fn main() -> Result<(), Error>{
     let futures = Futures::new(
         Arc::new(
             BinanceHttpClient::with_url(&config.usd_futures_url)
-                .credentials(credentials)
+                .credentials(futures_credentials.clone())
         ),
         Arc::clone(&config),
     );
@@ -55,7 +56,10 @@ async fn main() -> Result<(), Error>{
     println!("{:?}", spot_ticker);
     println!("{:?}\n", futures_ticker);
 
-    spot.limit_order(&spot_ticker, &futures_ticker).await?;
+    let local_spawner = LocalSpawner::new(Arc::new(futures));
+
+    spot.limit_order(&spot_ticker, &futures_ticker, &local_spawner).await?;
+    local_spawner.join();
 
     Ok(())
 }
